@@ -43,14 +43,14 @@
   letter-spacing: -0.01em;
 }
 
-/* Shiki pre reset */
+/* Shiki pre reset with auto-wrap support */
 pre.shiki {
   background-color: transparent !important;
   margin: 0 !important;
   padding: 0 !important;
-  white-space: pre !important;
-  word-break: normal !important;
-  word-wrap: normal !important;
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
 }
 
 pre.shiki code {

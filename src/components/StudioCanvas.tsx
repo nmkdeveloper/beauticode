@@ -1,12 +1,22 @@
 import React from 'react';
 import { Theme, ExportPreset } from '../types';
 import { CodeWindow } from './CodeWindow';
-import { Sparkles, Monitor, Smartphone, Square } from 'lucide-react';
+import { CodePage } from '../services/pagination';
+import {
+  Sparkles,
+  Monitor,
+  Smartphone,
+  Square,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 
 interface StudioCanvasProps {
   canvasRef: React.RefObject<HTMLDivElement>;
-  code: string;
-  onCodeChange: (code: string) => void;
+  pages: CodePage[];
+  currentPageIndex: number;
+  onSelectPage: (index: number) => void;
+  onPageCodeChange: (code: string) => void;
   language: string;
   theme: Theme;
   padding: number;
@@ -21,8 +31,10 @@ interface StudioCanvasProps {
 
 export const StudioCanvas: React.FC<StudioCanvasProps> = ({
   canvasRef,
-  code,
-  onCodeChange,
+  pages,
+  currentPageIndex,
+  onSelectPage,
+  onPageCodeChange,
   language,
   theme,
   padding,
@@ -35,13 +47,26 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
   preset,
 }) => {
   const isAuto = preset.category === 'auto' || preset.width === 0;
+  const currentPage = pages[currentPageIndex] || pages[0] || {
+    pageNumber: 1,
+    totalPages: 1,
+    code: '',
+    startLine: 1,
+    lineCount: 1,
+  };
 
   const getPresetBadge = () => {
     if (isAuto) {
       return (
-        <div className="flex items-center space-x-1 px-2.5 py-1 rounded-full bg-zinc-900/80 border border-zinc-800 text-[11px] text-zinc-400 font-mono shadow-sm">
-          <Sparkles className="w-3 h-3 text-amber-400" />
+        <div className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-zinc-900/90 border border-zinc-700/80 text-[11px] text-zinc-300 font-mono shadow-md backdrop-blur-md">
+          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
           <span>Auto-Fit (Native)</span>
+          {pages.length > 1 && (
+            <>
+              <span className="text-zinc-600">·</span>
+              <span className="text-sky-400">{pages.length} Pages</span>
+            </>
+          )}
         </div>
       );
     }
@@ -52,21 +77,27 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
 
     return (
       <div className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-zinc-900/90 border border-zinc-700/80 text-[11px] text-zinc-300 font-mono shadow-md backdrop-blur-md">
-        <Icon className="w-3 h-3 text-sky-400" />
+        <Icon className="w-3.5 h-3.5 text-sky-400" />
         <span className="font-semibold text-white">{preset.aspectRatio}</span>
-        <span className="text-zinc-500">·</span>
+        <span className="text-zinc-600">·</span>
         <span>
           {preset.width} × {preset.height}
         </span>
-        <span className="text-zinc-500">·</span>
-        <span className="text-emerald-400 font-sans font-medium text-[10px]">LIVE PREVIEW</span>
+        {pages.length > 1 && (
+          <>
+            <span className="text-zinc-600">·</span>
+            <span className="text-sky-400 font-medium">
+              Page {currentPage.pageNumber}/{pages.length}
+            </span>
+          </>
+        )}
       </div>
     );
   };
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-3 sm:p-6 md:p-8 overflow-auto min-h-0">
-      {/* Aspect Ratio Live Badge */}
+      {/* Aspect Ratio & Page Badge */}
       <div className="mb-3 select-none flex items-center justify-center">
         {getPresetBadge()}
       </div>
@@ -84,8 +115,8 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
         >
           <div className="w-full min-w-[320px] max-w-5xl transition-all">
             <CodeWindow
-              code={code}
-              onCodeChange={onCodeChange}
+              code={currentPage.code}
+              onCodeChange={onPageCodeChange}
               language={language}
               theme={theme}
               showLineNumbers={showLineNumbers}
@@ -93,6 +124,8 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
               onTitleChange={onTitleChange}
               fontSize={fontSize}
               darkMode={darkMode}
+              startLineNumber={currentPage.startLine}
+              pageBadge={pages.length > 1 ? `${currentPage.pageNumber} / ${pages.length}` : undefined}
             />
           </div>
         </div>
@@ -101,7 +134,7 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
         <div
           ref={canvasRef}
           id="export-canvas"
-          className="transition-all duration-300 rounded-2xl flex items-center justify-center relative overflow-hidden shadow-2xl border border-white/10"
+          className="transition-all duration-300 rounded-2xl flex items-center justify-center relative shadow-2xl border border-white/10"
           style={{
             background: showBackground ? theme.background : 'transparent',
             aspectRatio: `${preset.width} / ${preset.height}`,
@@ -109,14 +142,14 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
             maxWidth: preset.width >= preset.height ? '1060px' : '440px',
             height: preset.height > preset.width ? '700px' : 'auto',
             maxHeight: '75vh',
-            padding: `${Math.min(padding, 40)}px`,
+            padding: `${Math.min(padding, 36)}px`,
           }}
         >
-          <div className="w-full h-full flex items-center justify-center overflow-auto p-2">
-            <div className="w-full max-w-[95%] transition-all">
+          <div className="w-full h-full flex items-center justify-center p-1 sm:p-2">
+            <div className="w-full max-w-[96%] transition-all">
               <CodeWindow
-                code={code}
-                onCodeChange={onCodeChange}
+                code={currentPage.code}
+                onCodeChange={onPageCodeChange}
                 language={language}
                 theme={theme}
                 showLineNumbers={showLineNumbers}
@@ -124,9 +157,54 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
                 onTitleChange={onTitleChange}
                 fontSize={fontSize}
                 darkMode={darkMode}
+                startLineNumber={currentPage.startLine}
+                pageBadge={pages.length > 1 ? `${currentPage.pageNumber} / ${pages.length}` : undefined}
               />
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Multi-Page Navigation Bar (if > 1 page) */}
+      {pages.length > 1 && (
+        <div className="flex items-center space-x-2.5 mt-4 px-3.5 py-1.5 rounded-full bg-zinc-900/90 border border-zinc-700/80 shadow-xl text-xs backdrop-blur-xl select-none animate-fade-in">
+          <button
+            type="button"
+            disabled={currentPageIndex === 0}
+            onClick={() => onSelectPage(currentPageIndex - 1)}
+            className="p-1 rounded-md text-zinc-400 hover:text-white disabled:opacity-30 disabled:hover:text-zinc-400 transition-colors"
+            title="Previous Page (Left Arrow)"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+
+          <div className="flex items-center space-x-1.5 font-mono">
+            {pages.map((p, idx) => (
+              <button
+                key={p.pageNumber}
+                type="button"
+                onClick={() => onSelectPage(idx)}
+                className={`w-6 h-6 rounded-md flex items-center justify-center text-xs transition-all ${
+                  currentPageIndex === idx
+                    ? 'bg-sky-500 text-zinc-950 font-bold shadow-sm'
+                    : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                }`}
+                title={`Go to Page ${p.pageNumber}`}
+              >
+                {p.pageNumber}
+              </button>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            disabled={currentPageIndex === pages.length - 1}
+            onClick={() => onSelectPage(currentPageIndex + 1)}
+            className="p-1 rounded-md text-zinc-400 hover:text-white disabled:opacity-30 disabled:hover:text-zinc-400 transition-colors"
+            title="Next Page (Right Arrow)"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
         </div>
       )}
     </div>

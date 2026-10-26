@@ -1,13 +1,18 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useEditorState } from './hooks/useEditorState';
 import { getThemeById } from './constants/themes';
 import { getPresetById } from './constants/presets';
+import {
+  splitCodeIntoPages,
+  getRecommendedLinesPerPage,
+  updateFullCodeWithPage,
+} from './services/pagination';
 import { Header } from './components/Header';
 import { StudioCanvas } from './components/StudioCanvas';
 import { ControlBar } from './components/ControlBar';
 import { SizeSelector } from './components/SizeSelector';
 import { ExportDropdown } from './components/ExportDropdown';
-import { BatchExportModal } from './components/BatchExportModal';
+import { PagesExportModal } from './components/PagesExportModal';
 import { ShortcutsModal } from './components/ShortcutsModal';
 import { copyImageToClipboard } from './services/imageExporter';
 import { renderPresetImage } from './services/batchExporter';
@@ -20,14 +25,41 @@ export function App() {
   const currentTheme = getThemeById(editor.theme);
   const activePreset = getPresetById(editor.preset);
 
-  const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
+  const [isPagesModalOpen, setIsPagesModalOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [currentPageIndex, setCurrentPageIndex] = useState(0);
+
+  // Dynamic pagination based on active ratio
+  const linesPerPage = useMemo(
+    () => getRecommendedLinesPerPage(activePreset.aspectRatio),
+    [activePreset.aspectRatio]
+  );
+
+  const pages = useMemo(
+    () => splitCodeIntoPages(editor.code, linesPerPage),
+    [editor.code, linesPerPage]
+  );
+
+  const safePageIndex = Math.min(currentPageIndex, Math.max(0, pages.length - 1));
 
   const showToast = useCallback((msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 2500);
   }, []);
+
+  const handlePageCodeChange = useCallback(
+    (newPageCode: string) => {
+      const updated = updateFullCodeWithPage(
+        editor.code,
+        safePageIndex,
+        pages,
+        newPageCode
+      );
+      editor.setCode(updated);
+    },
+    [editor.code, safePageIndex, pages, editor.setCode]
+  );
 
   const handleQuickExport = useCallback(async () => {
     if (!canvasRef.current) return;
@@ -46,14 +78,14 @@ export function App() {
         .replace(/[<>:"/\\|?*]/g, '_')
         .replace(/\.[^/.]+$/, '')
         .trim() || 'beauticode';
-      const ext = activePreset.width ? `${activePreset.width}x${activePreset.height}` : '2x';
-      saveAs(blob, `${cleanTitle}-${activePreset.id || ext}.png`);
-      showToast(`Exported ${activePreset.name}!`);
+      const pageSuffix = pages.length > 1 ? `-page-${safePageIndex + 1}` : '';
+      saveAs(blob, `${cleanTitle}${pageSuffix}.png`);
+      showToast(`Page ${safePageIndex + 1} exported!`);
     } catch (err) {
       console.error(err);
       showToast('Export failed');
     }
-  }, [editor.title, activePreset, currentTheme, editor.showBackground, showToast]);
+  }, [editor.title, activePreset, currentTheme, editor.showBackground, pages.length, safePageIndex, showToast]);
 
   const handleCopyImage = useCallback(async () => {
     if (!canvasRef.current) return;
@@ -77,7 +109,7 @@ export function App() {
       const isModifier = isMac ? e.metaKey : e.ctrlKey;
 
       if (e.key === 'Escape') {
-        setIsBatchModalOpen(false);
+        setIsPagesModalOpen(false);
         setIsShortcutsOpen(false);
         return;
       }
@@ -85,6 +117,16 @@ export function App() {
       const activeEl = document.activeElement;
       const isInputFocused =
         activeEl?.tagName === 'INPUT' || activeEl?.tagName === 'TEXTAREA';
+
+      if (!isInputFocused) {
+        if (e.key === 'ArrowLeft') {
+          setCurrentPageIndex((prev) => Math.max(0, prev - 1));
+          return;
+        } else if (e.key === 'ArrowRight') {
+          setCurrentPageIndex((prev) => Math.min(pages.length - 1, prev + 1));
+          return;
+        }
+      }
 
       if (e.key === '?' && !isInputFocused) {
         setIsShortcutsOpen((prev) => !prev);
@@ -94,14 +136,12 @@ export function App() {
       if (isModifier && e.key.toLowerCase() === 's') {
         e.preventDefault();
         if (e.shiftKey) {
-          setIsBatchModalOpen(true);
+          setIsPagesModalOpen(true);
         } else {
           handleQuickExport();
         }
       } else if (isModifier && e.key.toLowerCase() === 'c') {
-        // If outside editor and not selecting text, trigger copy image
         const selection = window.getSelection()?.toString();
-
         if (!selection && !isInputFocused) {
           e.preventDefault();
           handleCopyImage();
@@ -111,7 +151,7 @@ export function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleQuickExport, handleCopyImage]);
+  }, [handleQuickExport, handleCopyImage, pages.length]);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#09090b] text-zinc-100 selection:bg-zinc-800 selection:text-white">
@@ -125,13 +165,19 @@ export function App() {
 
       {/* Top Header */}
       <Header
-        onReset={editor.resetSnippet}
+        onReset={() => {
+          editor.resetSnippet();
+          setCurrentPageIndex(0);
+        }}
         onOpenShortcuts={() => setIsShortcutsOpen(true)}
         renderSizeSelector={() => (
           <SizeSelector
             currentPresetId={editor.preset}
-            onSelectPreset={editor.setPreset}
-            onOpenBatchModal={() => setIsBatchModalOpen(true)}
+            onSelectPreset={(p) => {
+              editor.setPreset(p);
+              setCurrentPageIndex(0);
+            }}
+            onOpenBatchModal={() => setIsPagesModalOpen(true)}
           />
         )}
         renderExportButton={() => (
@@ -141,7 +187,10 @@ export function App() {
             preset={activePreset}
             theme={currentTheme}
             showBackground={editor.showBackground}
-            onOpenBatchModal={() => setIsBatchModalOpen(true)}
+            pages={pages}
+            currentPageIndex={safePageIndex}
+            onSelectPage={setCurrentPageIndex}
+            onOpenPagesModal={() => setIsPagesModalOpen(true)}
           />
         )}
       />
@@ -150,8 +199,10 @@ export function App() {
       <main className="flex-1 flex flex-col relative pb-28">
         <StudioCanvas
           canvasRef={canvasRef}
-          code={editor.code}
-          onCodeChange={editor.setCode}
+          pages={pages}
+          currentPageIndex={safePageIndex}
+          onSelectPage={setCurrentPageIndex}
+          onPageCodeChange={handlePageCodeChange}
           language={editor.effectiveLanguage}
           theme={currentTheme}
           padding={editor.padding}
@@ -182,14 +233,18 @@ export function App() {
         />
       </main>
 
-      {/* Batch Export Modal */}
-      <BatchExportModal
-        isOpen={isBatchModalOpen}
-        onClose={() => setIsBatchModalOpen(false)}
+      {/* Multi-Pages Export Modal */}
+      <PagesExportModal
+        isOpen={isPagesModalOpen}
+        onClose={() => setIsPagesModalOpen(false)}
+        pages={pages}
         canvasRef={canvasRef}
+        preset={activePreset}
         theme={currentTheme}
         showBackground={editor.showBackground}
         title={editor.title}
+        currentPageIndex={safePageIndex}
+        onSelectPage={setCurrentPageIndex}
       />
 
       {/* Keyboard Shortcuts Modal */}

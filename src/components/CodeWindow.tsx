@@ -14,6 +14,8 @@ interface CodeWindowProps {
   fontSize?: number;
   darkMode?: boolean;
   isReadOnly?: boolean;
+  startLineNumber?: number;
+  pageBadge?: string;
 }
 
 export const CodeWindow: React.FC<CodeWindowProps> = ({
@@ -27,6 +29,8 @@ export const CodeWindow: React.FC<CodeWindowProps> = ({
   fontSize = 14,
   darkMode = true,
   isReadOnly = false,
+  startLineNumber = 1,
+  pageBadge,
 }) => {
   const [highlightedHtml, setHighlightedHtml] = useState<string>('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -94,11 +98,12 @@ export const CodeWindow: React.FC<CodeWindowProps> = ({
         textColor={textColor}
         isEditable={!isReadOnly}
         darkMode={darkMode}
+        pageBadge={pageBadge}
       />
 
       {/* Code Container with Gutter & Overlay */}
       <div
-        className="flex p-4 sm:p-5 relative code-font overflow-x-auto"
+        className="flex p-4 sm:p-5 relative code-font overflow-hidden"
         style={{
           fontSize: `${fontSize}px`,
           lineHeight: '1.65',
@@ -107,7 +112,7 @@ export const CodeWindow: React.FC<CodeWindowProps> = ({
         {/* Line Numbers Gutter */}
         {showLineNumbers && (
           <div
-            className={`flex flex-col pr-4 select-none text-right font-mono border-r mr-4 opacity-40 ${
+            className={`flex flex-col pr-4 select-none text-right font-mono border-r mr-4 opacity-40 flex-shrink-0 ${
               darkMode ? 'border-white/10 text-white' : 'border-black/15 text-zinc-700'
             }`}
             style={{
@@ -118,19 +123,21 @@ export const CodeWindow: React.FC<CodeWindowProps> = ({
           >
             {lines.map((_, i) => (
               <span key={i} className="leading-[1.65]">
-                {i + 1}
+                {startLineNumber + i}
               </span>
             ))}
           </div>
         )}
 
-        {/* Code Content Area */}
+        {/* Code Content Area with auto-wrapping */}
         <div className="relative flex-1 min-w-0">
           {/* Highlighted Render Layer */}
           <div
-            className="shiki-container select-none pointer-events-none whitespace-pre"
+            className="shiki-container select-none pointer-events-none whitespace-pre-wrap break-words"
             style={{
               lineHeight: '1.65',
+              wordBreak: 'break-word',
+              overflowWrap: 'anywhere',
             }}
             dangerouslySetInnerHTML={{ __html: highlightedHtml }}
           />
@@ -146,7 +153,7 @@ export const CodeWindow: React.FC<CodeWindowProps> = ({
               autoCapitalize="off"
               autoComplete="off"
               autoCorrect="off"
-              className={`absolute inset-0 w-full h-full resize-none bg-transparent text-transparent focus:outline-none whitespace-pre overflow-hidden ${
+              className={`absolute inset-0 w-full h-full resize-none bg-transparent text-transparent focus:outline-none whitespace-pre-wrap break-words overflow-hidden ${
                 darkMode ? 'caret-white' : 'caret-zinc-900'
               }`}
               style={{
@@ -156,6 +163,8 @@ export const CodeWindow: React.FC<CodeWindowProps> = ({
                 padding: 0,
                 margin: 0,
                 border: 'none',
+                wordBreak: 'break-word',
+                overflowWrap: 'anywhere',
               }}
             />
           )}

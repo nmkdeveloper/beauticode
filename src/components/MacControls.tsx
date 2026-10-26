@@ -7,6 +7,7 @@ interface MacControlsProps {
   textColor?: string;
   isEditable?: boolean;
   darkMode?: boolean;
+  pageBadge?: string;
 }
 
 export const MacControls: React.FC<MacControlsProps> = ({
@@ -15,6 +16,7 @@ export const MacControls: React.FC<MacControlsProps> = ({
   textColor = '#a1a1aa',
   isEditable = true,
   darkMode = true,
+  pageBadge,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [currentTitle, setCurrentTitle] = useState(title);
@@ -99,8 +101,18 @@ export const MacControls: React.FC<MacControlsProps> = ({
         )}
       </div>
 
-      {/* Balanced right spacing placeholder */}
-      <div className="w-[52px]" />
+      {/* Right slot: Page badge or balanced placeholder */}
+      <div className="min-w-[52px] flex justify-end items-center">
+        {pageBadge && (
+          <span
+            className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-medium ${
+              darkMode ? 'bg-white/10 text-zinc-300' : 'bg-black/10 text-zinc-700'
+            }`}
+          >
+            {pageBadge}
+          </span>
+        )}
+      </div>
     </div>
   );
 };
