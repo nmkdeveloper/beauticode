@@ -43,6 +43,7 @@ export function loadGoogleFont(fontFamily: string): Promise<boolean> {
     const link = document.createElement('link');
     link.id = linkId;
     link.rel = 'stylesheet';
+    link.crossOrigin = 'anonymous';
     link.href = `https://fonts.googleapis.com/css2?family=${apiName}:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap`;
 
     link.onload = () => {
@@ -59,6 +60,7 @@ export function loadGoogleFont(fontFamily: string): Promise<boolean> {
       const fallbackLink = document.createElement('link');
       fallbackLink.id = `${linkId}-fallback`;
       fallbackLink.rel = 'stylesheet';
+      fallbackLink.crossOrigin = 'anonymous';
       fallbackLink.href = `https://fonts.googleapis.com/css2?family=${apiName}&display=swap`;
 
       fallbackLink.onload = () => {

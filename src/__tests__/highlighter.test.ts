@@ -32,4 +32,20 @@ describe('Shiki Syntax Highlighter Service', () => {
     expect(html).toContain('Xin chào thế giới!');
     expect(html).toContain('🚀');
   });
+
+  it('highlights competitive programming C++ code with 190+ lines', async () => {
+    const cppSnippet = `#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define FOR(a, b, c) for (int a = (b); a <= (c); a++)
+// $x \\rightarrow (x \\times mul + add) \\pmod{MOD}$
+int main() {
+    ios_base::sync_with_stdio(false);
+    return 0;
+}`;
+    const html = await highlightCode(cppSnippet, 'cpp', 'github-dark');
+    expect(html).toContain('bits/stdc++.h');
+    expect(html).toContain('ios_base');
+    expect(html).toContain('pmod');
+  });
 });

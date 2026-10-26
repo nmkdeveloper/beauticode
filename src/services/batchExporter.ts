@@ -1,4 +1,4 @@
-import { toBlob } from 'html-to-image';
+import { toBlob, toPng } from 'html-to-image';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { ExportPreset, Theme } from '../types';
@@ -29,6 +29,32 @@ export function computeContainmentScale(
   return { scale, scaledWidth, scaledHeight, fits };
 }
 
+async function safeNodeToBlob(node: HTMLElement, options: Record<string, unknown>): Promise<Blob> {
+  const mergedOptions = {
+    ...options,
+    fetchRequestInit: { mode: 'cors' as RequestMode },
+    filter: (domNode: HTMLElement) => domNode.tagName !== 'TEXTAREA',
+  };
+
+  try {
+    const blob = await toBlob(node, mergedOptions);
+    if (blob && blob.size > 0) {
+      return blob;
+    }
+  } catch (err) {
+    console.warn('toBlob primary capture encountered issue, attempting toPng fallback:', err);
+  }
+
+  // Robust fallback via toPng dataURL
+  const dataUrl = await toPng(node, mergedOptions);
+  const res = await fetch(dataUrl);
+  const fallbackBlob = await res.blob();
+  if (!fallbackBlob || fallbackBlob.size === 0) {
+    throw new Error('Failed to create image blob');
+  }
+  return fallbackBlob;
+}
+
 export async function renderPresetImage(
   codeCardNode: HTMLElement,
   sourceCanvasNode: HTMLElement | null,
@@ -36,46 +62,56 @@ export async function renderPresetImage(
   theme: Theme,
   showBackground: boolean
 ): Promise<Blob> {
-  // Capture unconstrained content dimensions so wide code is never clipped
-  const codeFontEl = codeCardNode.querySelector('.code-font') as HTMLElement | null;
-  const gutterEl = codeCardNode.querySelector('.border-r') as HTMLElement | null;
-  const preEl = codeCardNode.querySelector('pre.shiki') as HTMLElement | null;
-
-  let naturalContentWidth = 0;
-  if (preEl) {
-    naturalContentWidth = preEl.scrollWidth;
-  } else if (codeFontEl) {
-    naturalContentWidth = codeFontEl.scrollWidth;
+  if (document.fonts && document.fonts.ready) {
+    await document.fonts.ready;
   }
 
-  const gutterWidth = gutterEl ? gutterEl.offsetWidth + 16 : 0;
-  const paddingX = 40;
-  const cardRect = codeCardNode.getBoundingClientRect();
-  const naturalWidth = Math.max(
-    naturalContentWidth + gutterWidth + paddingX,
-    codeCardNode.scrollWidth,
-    cardRect.width,
-    320
-  );
-  const naturalHeight = Math.max(
-    codeCardNode.scrollHeight,
-    cardRect.height,
-    160
-  );
-
-  // If auto-fit / native preset, render offscreen fitted container
+  // 1. AUTO-FIT PRESET (Native / Dynamic size)
   if (preset.width === 0 || preset.height === 0) {
+    // If sourceCanvasNode is in document and visible, capture it directly
+    if (
+      sourceCanvasNode &&
+      document.body.contains(sourceCanvasNode) &&
+      sourceCanvasNode.offsetWidth > 0 &&
+      sourceCanvasNode.offsetHeight > 0
+    ) {
+      await new Promise((r) => setTimeout(r, 60));
+      return await safeNodeToBlob(sourceCanvasNode, {
+        pixelRatio: 2,
+        quality: 1,
+      });
+    }
+
+    // Fallback: build an isolated unclipped container inside hidden wrapper
+    const cardRect = codeCardNode.getBoundingClientRect();
+    const naturalWidth = Math.max(codeCardNode.scrollWidth, cardRect.width, 480);
+    const naturalHeight = Math.max(codeCardNode.scrollHeight, cardRect.height, 160);
+    const paddingVal = 64;
+    const totalW = naturalWidth + paddingVal * 2;
+    const totalH = naturalHeight + paddingVal * 2;
+
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'fixed';
+    wrapper.style.left = '-99999px';
+    wrapper.style.top = '0';
+    wrapper.style.width = '0';
+    wrapper.style.height = '0';
+    wrapper.style.overflow = 'hidden';
+    wrapper.style.zIndex = '-9999';
+
     const container = document.createElement('div');
-    container.style.position = 'fixed';
-    container.style.left = '-99999px';
+    container.style.position = 'relative';
+    container.style.left = '0';
     container.style.top = '0';
+    container.style.width = `${totalW}px`;
+    container.style.height = `${totalH}px`;
+    container.style.boxSizing = 'border-box';
     container.style.background = showBackground ? theme.background : 'transparent';
-    container.style.padding = sourceCanvasNode?.style.padding || '64px';
-    container.style.display = 'inline-flex';
+    container.style.padding = `${paddingVal}px`;
+    container.style.display = 'flex';
     container.style.alignItems = 'center';
     container.style.justifyContent = 'center';
     container.style.borderRadius = '16px';
-    container.style.zIndex = '-9999';
 
     const clone = codeCardNode.cloneNode(true) as HTMLElement;
     clone.querySelectorAll('textarea').forEach((ta) => ta.remove());
@@ -83,66 +119,59 @@ export async function renderPresetImage(
     clone.style.minWidth = `${naturalWidth}px`;
     clone.style.maxWidth = 'none';
 
-    const cloneCodeFont = clone.querySelector('.code-font') as HTMLElement | null;
-    if (cloneCodeFont) {
-      cloneCodeFont.style.overflow = 'visible';
-      cloneCodeFont.style.overflowX = 'visible';
-    }
-
     container.appendChild(clone);
-    document.body.appendChild(container);
+    wrapper.appendChild(container);
+    document.body.appendChild(wrapper);
 
     try {
-      if (document.fonts && document.fonts.ready) {
-        await document.fonts.ready;
-      }
       await new Promise((r) => setTimeout(r, 60));
-
-      const blob = await toBlob(container, {
+      return await safeNodeToBlob(container, {
+        width: totalW,
+        height: totalH,
         pixelRatio: 2,
         quality: 1,
-        filter: (domNode) => (domNode as HTMLElement).tagName !== 'TEXTAREA',
       });
-      if (!blob) throw new Error(`Failed to render auto-fit preset`);
-      return blob;
     } finally {
-      if (document.body.contains(container)) {
-        document.body.removeChild(container);
+      if (document.body.contains(wrapper)) {
+        document.body.removeChild(wrapper);
       }
     }
   }
 
-  // Sized preset: build offscreen container with exact preset dimensions
+  // 2. SIZED PRESET (4K, FHD, 16:9, 9:16, 1:1, etc.)
+  const cardRect = codeCardNode.getBoundingClientRect();
+  const naturalWidth = Math.max(codeCardNode.scrollWidth, cardRect.width, 480);
+  const naturalHeight = Math.max(codeCardNode.scrollHeight, cardRect.height, 160);
+
+  const wrapper = document.createElement('div');
+  wrapper.style.position = 'fixed';
+  wrapper.style.left = '-99999px';
+  wrapper.style.top = '0';
+  wrapper.style.width = '0';
+  wrapper.style.height = '0';
+  wrapper.style.overflow = 'hidden';
+  wrapper.style.zIndex = '-9999';
+
   const container = document.createElement('div');
-  container.style.position = 'fixed';
-  container.style.left = '-99999px';
+  container.style.position = 'relative';
+  container.style.left = '0';
   container.style.top = '0';
   container.style.width = `${preset.width}px`;
   container.style.height = `${preset.height}px`;
+  container.style.boxSizing = 'border-box';
   container.style.background = showBackground ? theme.background : 'transparent';
   container.style.display = 'flex';
   container.style.alignItems = 'center';
   container.style.justifyContent = 'center';
   container.style.overflow = 'hidden';
-  container.style.zIndex = '-9999';
 
-  // Clone code card without interactive textarea
   const clone = codeCardNode.cloneNode(true) as HTMLElement;
   clone.querySelectorAll('textarea').forEach((ta) => ta.remove());
-
-  // Set explicit unclipped width on card clone
   clone.style.width = `${naturalWidth}px`;
   clone.style.minWidth = `${naturalWidth}px`;
   clone.style.maxWidth = 'none';
   clone.style.boxSizing = 'border-box';
 
-  const cloneCodeFont = clone.querySelector('.code-font') as HTMLElement | null;
-  if (cloneCodeFont) {
-    cloneCodeFont.style.overflow = 'visible';
-    cloneCodeFont.style.overflowX = 'visible';
-  }
-
-  // Calculate containment scale with safe margin
   const { scale } = computeContainmentScale(
     naturalWidth,
     naturalHeight,
@@ -151,7 +180,6 @@ export async function renderPresetImage(
     0.85
   );
 
-  // Scale wrapper
   const scaler = document.createElement('div');
   scaler.style.transform = `scale(${scale})`;
   scaler.style.transformOrigin = 'center center';
@@ -161,30 +189,20 @@ export async function renderPresetImage(
   scaler.appendChild(clone);
 
   container.appendChild(scaler);
-  document.body.appendChild(container);
+  wrapper.appendChild(container);
+  document.body.appendChild(wrapper);
 
   try {
-    if (document.fonts && document.fonts.ready) {
-      await document.fonts.ready;
-    }
     await new Promise((r) => setTimeout(r, 60));
-
-    const blob = await toBlob(container, {
+    return await safeNodeToBlob(container, {
       pixelRatio: 1,
       quality: 1,
       width: preset.width,
       height: preset.height,
-      filter: (domNode) => (domNode as HTMLElement).tagName !== 'TEXTAREA',
     });
-
-    if (!blob) {
-      throw new Error(`Failed to render preset: ${preset.name}`);
-    }
-
-    return blob;
   } finally {
-    if (document.body.contains(container)) {
-      document.body.removeChild(container);
+    if (document.body.contains(wrapper)) {
+      document.body.removeChild(wrapper);
     }
   }
 }

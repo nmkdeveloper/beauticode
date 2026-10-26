@@ -32,6 +32,7 @@ export async function exportSingleImage(
       pixelRatio,
       quality: 1,
       filter,
+      fetchRequestInit: { mode: 'cors' as RequestMode },
     });
     if (!blob) {
       throw new Error('Failed to render PNG blob from canvas');
@@ -55,6 +56,7 @@ export async function copyImageToClipboard(
       pixelRatio,
       quality: 1,
       filter,
+      fetchRequestInit: { mode: 'cors' as RequestMode },
     });
 
     if (!blob) {
