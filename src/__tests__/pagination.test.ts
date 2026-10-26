@@ -49,5 +49,20 @@ function b() {
     expect(getRecommendedLinesPerPage('9:16')).toBe(18);
     expect(getRecommendedLinesPerPage('16:9')).toBe(14);
     expect(getRecommendedLinesPerPage('1:1')).toBe(16);
+    expect(getRecommendedLinesPerPage('auto')).toBe(0);
+    expect(getRecommendedLinesPerPage('Auto')).toBe(0);
+  });
+
+  it('fits entire code into 1 single page when linesPerPage is 0 (auto-fit)', () => {
+    const lines = Array.from({ length: 80 }, (_, i) => `const val_${i} = ${i};`);
+    const code = lines.join('\n');
+    const pages = splitCodeIntoPages(code, 0);
+
+    expect(pages).toHaveLength(1);
+    expect(pages[0].pageNumber).toBe(1);
+    expect(pages[0].totalPages).toBe(1);
+    expect(pages[0].startLine).toBe(1);
+    expect(pages[0].lineCount).toBe(80);
+    expect(pages[0].code).toBe(code);
   });
 });

@@ -16,6 +16,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
     { key: `${modKey} + S`, desc: 'Quick save current page (PNG)' },
     { key: `${modKey} + Shift + S`, desc: 'Open Download Pages (ZIP) modal' },
     { key: `${modKey} + C`, desc: 'Copy code image to clipboard (when outside editor)' },
+    { key: `${modKey} + + / -`, desc: 'Increase / decrease font size' },
     { key: '← / →', desc: 'Navigate between code pages' },
     { key: 'Tab', desc: 'Insert 2-space indentation in code editor' },
     { key: '?', desc: 'Toggle keyboard shortcuts dialog' },

@@ -2,6 +2,7 @@ import React from 'react';
 import { Eye, EyeOff, Sun, Moon, Hash } from 'lucide-react';
 import { ThemeSelector } from './ThemeSelector';
 import { LanguageSelector } from './LanguageSelector';
+import { FontSelector } from './FontSelector';
 
 interface ControlBarProps {
   themeId: string;
@@ -9,6 +10,10 @@ interface ControlBarProps {
   languageId: string;
   effectiveLanguageId: string;
   onLanguageChange: (id: string) => void;
+  fontFamily: string;
+  onFontFamilyChange: (font: string) => void;
+  fontSize: number;
+  onFontSizeChange: (size: number) => void;
   padding: number;
   onPaddingChange: (padding: number) => void;
   showBackground: boolean;
@@ -25,6 +30,10 @@ export const ControlBar: React.FC<ControlBarProps> = ({
   languageId,
   effectiveLanguageId,
   onLanguageChange,
+  fontFamily,
+  onFontFamilyChange,
+  fontSize,
+  onFontSizeChange,
   padding,
   onPaddingChange,
   showBackground,
@@ -104,6 +113,17 @@ export const ControlBar: React.FC<ControlBarProps> = ({
             </button>
           ))}
         </div>
+
+        {/* Divider */}
+        <div className="w-[1px] h-5 bg-zinc-800 flex-shrink-0" />
+
+        {/* Font & Size Selector */}
+        <FontSelector
+          currentFont={fontFamily}
+          onSelectFont={onFontFamilyChange}
+          fontSize={fontSize}
+          onFontSizeChange={onFontSizeChange}
+        />
 
         {/* Divider */}
         <div className="w-[1px] h-5 bg-zinc-800 flex-shrink-0" />

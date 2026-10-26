@@ -26,6 +26,7 @@ interface StudioCanvasProps {
   title: string;
   onTitleChange: (title: string) => void;
   fontSize: number;
+  fontFamily: string;
   preset: ExportPreset;
 }
 
@@ -44,6 +45,7 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
   title,
   onTitleChange,
   fontSize,
+  fontFamily,
   preset,
 }) => {
   const isAuto = preset.category === 'auto' || preset.width === 0;
@@ -123,6 +125,7 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
               title={title}
               onTitleChange={onTitleChange}
               fontSize={fontSize}
+              fontFamily={fontFamily}
               darkMode={darkMode}
               startLineNumber={currentPage.startLine}
               pageBadge={pages.length > 1 ? `${currentPage.pageNumber} / ${pages.length}` : undefined}
@@ -156,6 +159,7 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
                 title={title}
                 onTitleChange={onTitleChange}
                 fontSize={fontSize}
+                fontFamily={fontFamily}
                 darkMode={darkMode}
                 startLineNumber={currentPage.startLine}
                 pageBadge={pages.length > 1 ? `${currentPage.pageNumber} / ${pages.length}` : undefined}

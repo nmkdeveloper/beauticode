@@ -133,6 +133,14 @@ export function App() {
         return;
       }
 
+      if (isModifier && (e.key === '=' || e.key === '+')) {
+        e.preventDefault();
+        editor.setFontSize((prev) => Math.min(28, prev + 1));
+      } else if (isModifier && (e.key === '-' || e.key === '_')) {
+        e.preventDefault();
+        editor.setFontSize((prev) => Math.max(10, prev - 1));
+      }
+
       if (isModifier && e.key.toLowerCase() === 's') {
         e.preventDefault();
         if (e.shiftKey) {
@@ -212,6 +220,7 @@ export function App() {
           title={editor.title}
           onTitleChange={editor.setTitle}
           fontSize={editor.fontSize}
+          fontFamily={editor.fontFamily}
           preset={activePreset}
         />
 
@@ -222,6 +231,10 @@ export function App() {
           languageId={editor.language}
           effectiveLanguageId={editor.effectiveLanguage}
           onLanguageChange={editor.setLanguage}
+          fontFamily={editor.fontFamily}
+          onFontFamilyChange={editor.setFontFamily}
+          fontSize={editor.fontSize}
+          onFontSizeChange={editor.setFontSize}
           padding={editor.padding}
           onPaddingChange={editor.setPadding}
           showBackground={editor.showBackground}

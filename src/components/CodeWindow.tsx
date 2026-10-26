@@ -12,6 +12,7 @@ interface CodeWindowProps {
   title: string;
   onTitleChange: (title: string) => void;
   fontSize?: number;
+  fontFamily?: string;
   darkMode?: boolean;
   isReadOnly?: boolean;
   startLineNumber?: number;
@@ -27,6 +28,7 @@ export const CodeWindow: React.FC<CodeWindowProps> = ({
   title,
   onTitleChange,
   fontSize = 14,
+  fontFamily,
   darkMode = true,
   isReadOnly = false,
   startLineNumber = 1,
@@ -105,6 +107,9 @@ export const CodeWindow: React.FC<CodeWindowProps> = ({
       <div
         className="flex p-4 sm:p-5 relative code-font overflow-hidden"
         style={{
+          fontFamily: fontFamily
+            ? `"${fontFamily}", "JetBrains Mono", "Fira Code", monospace`
+            : undefined,
           fontSize: `${fontSize}px`,
           lineHeight: '1.65',
         }}
@@ -116,6 +121,7 @@ export const CodeWindow: React.FC<CodeWindowProps> = ({
               darkMode ? 'border-white/10 text-white' : 'border-black/15 text-zinc-700'
             }`}
             style={{
+              fontFamily: 'inherit',
               fontSize: 'inherit',
               lineHeight: '1.65',
               minWidth: '2.5rem',

@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { EditorSettings } from '../types';
 import { DEFAULT_THEME_ID } from '../constants/themes';
 import { AUTO_DETECT_ID, detectLanguage } from '../constants/languages';
+import { DEFAULT_FONT_NAME } from '../constants/fonts';
+import { loadGoogleFont } from '../services/fontLoader';
 
 const DEFAULT_SNIPPET = `// Welcome to BeautiCode ✨
 // Create gorgeous, studio-quality code images in seconds.
@@ -39,6 +41,8 @@ export function encodeState(state: Partial<EditorSettings>): string {
       ln: state.showLineNumbers,
       tt: state.title,
       pr: state.preset,
+      fs: state.fontSize,
+      ff: state.fontFamily,
     });
     // Safe Unicode to base64
     return btoa(
@@ -73,6 +77,8 @@ export function decodeState(hash: string): Partial<EditorSettings> | null {
       showLineNumbers: data.ln,
       title: data.tt,
       preset: data.pr,
+      fontSize: typeof data.fs === 'number' ? data.fs : undefined,
+      fontFamily: typeof data.ff === 'string' ? data.ff : undefined,
     };
   } catch {
     return null;
@@ -93,7 +99,15 @@ export function useEditorState() {
   const [showLineNumbers, setShowLineNumbers] = useState<boolean>(() => initialSaved?.showLineNumbers ?? true);
   const [title, setTitle] = useState<string>(() => initialSaved?.title ?? 'BeautiCode.ts');
   const [preset, setPreset] = useState<string>(() => initialSaved?.preset ?? 'auto-fit');
-  const [fontSize, setFontSize] = useState<number>(14);
+  const [fontSize, setFontSize] = useState<number>(() => initialSaved?.fontSize ?? 14);
+  const [fontFamily, setFontFamily] = useState<string>(() => initialSaved?.fontFamily ?? DEFAULT_FONT_NAME);
+
+  // Dynamically load selected Google Font
+  useEffect(() => {
+    if (fontFamily) {
+      loadGoogleFont(fontFamily);
+    }
+  }, [fontFamily]);
 
   // Compute effective language if auto-detect is enabled
   const effectiveLanguage = useMemo(() => {
@@ -116,6 +130,8 @@ export function useEditorState() {
         showLineNumbers,
         title,
         preset,
+        fontSize,
+        fontFamily,
       });
       if (encoded) {
         window.history.replaceState(null, '', `#${encoded}`);
@@ -123,7 +139,7 @@ export function useEditorState() {
     }, 400);
 
     return () => clearTimeout(timeout);
-  }, [code, language, theme, padding, showBackground, darkMode, showLineNumbers, title, preset]);
+  }, [code, language, theme, padding, showBackground, darkMode, showLineNumbers, title, preset, fontSize, fontFamily]);
 
   // Listen for browser navigation (Back / Forward)
   useEffect(() => {
@@ -139,6 +155,8 @@ export function useEditorState() {
         if (saved.showLineNumbers !== undefined) setShowLineNumbers(saved.showLineNumbers);
         if (saved.title !== undefined) setTitle(saved.title);
         if (saved.preset !== undefined) setPreset(saved.preset);
+        if (saved.fontSize !== undefined) setFontSize(saved.fontSize);
+        if (saved.fontFamily !== undefined) setFontFamily(saved.fontFamily);
       }
     };
 
@@ -156,6 +174,8 @@ export function useEditorState() {
     setShowLineNumbers(true);
     setTitle('BeautiCode.ts');
     setPreset('auto-fit');
+    setFontSize(14);
+    setFontFamily(DEFAULT_FONT_NAME);
   }, []);
 
   return {
@@ -180,6 +200,8 @@ export function useEditorState() {
     setPreset,
     fontSize,
     setFontSize,
+    fontFamily,
+    setFontFamily,
     resetSnippet,
   };
 }

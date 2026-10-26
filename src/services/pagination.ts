@@ -9,21 +9,23 @@ export interface CodePage {
 const MANUAL_PAGE_BREAK_REGEX = /^\s*(?:\/\/|#|\/\*)\s*-{2,}\s*(?:page)?\s*-*\s*(?:\*\/)?\s*$/i;
 
 export function getRecommendedLinesPerPage(aspectRatio: string): number {
-  switch (aspectRatio) {
+  switch (aspectRatio.toLowerCase()) {
     case '9:16':
       return 18;
     case '16:9':
       return 14;
     case '1:1':
       return 16;
+    case 'auto':
     default:
-      return 22;
+      // Auto-fit mode fits the entire code in 1 single page without pagination
+      return 0;
   }
 }
 
 export function splitCodeIntoPages(
   fullCode: string,
-  linesPerPage: number = 20
+  linesPerPage: number = 0
 ): CodePage[] {
   if (!fullCode || !fullCode.trim()) {
     return [
@@ -33,6 +35,20 @@ export function splitCodeIntoPages(
         code: fullCode || '',
         startLine: 1,
         lineCount: 1,
+      },
+    ];
+  }
+
+  // If linesPerPage <= 0 (Auto-Fit mode), fit the ENTIRE code in 1 single page
+  if (linesPerPage <= 0) {
+    const rawLines = fullCode.split('\n');
+    return [
+      {
+        pageNumber: 1,
+        totalPages: 1,
+        code: fullCode,
+        startLine: 1,
+        lineCount: rawLines.length,
       },
     ];
   }
