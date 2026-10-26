@@ -40,6 +40,7 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({
   return (
     <div className="relative" ref={dropdownRef}>
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-zinc-800/80 hover:bg-zinc-700/80 border border-zinc-700/60 text-xs font-medium text-zinc-200 transition-all focus:outline-none focus:ring-1 focus:ring-zinc-500"
         title="Select Theme"
@@ -53,7 +54,10 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({
       </button>
 
       {isOpen && (
-        <div className="absolute bottom-full mb-2 left-0 w-80 rounded-2xl bg-zinc-900 border border-zinc-800 shadow-2xl z-50 p-3 flex flex-col max-h-[380px]">
+        <div
+          onMouseDown={(e) => e.stopPropagation()}
+          className="absolute bottom-full mb-3 left-0 sm:left-auto sm:-translate-x-1/4 w-80 rounded-2xl bg-zinc-900/95 border border-zinc-700/80 shadow-2xl z-50 p-3 flex flex-col max-h-[380px] backdrop-blur-xl animate-fade-in"
+        >
           {/* Header & Category filter */}
           <div className="flex items-center justify-between pb-2 mb-2 border-b border-zinc-800">
             <div className="flex items-center space-x-1.5 text-xs font-semibold text-zinc-300">
@@ -63,6 +67,7 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({
             <div className="flex space-x-1">
               {(['all', 'gradient', 'minimal', 'tech'] as const).map((cat) => (
                 <button
+                  type="button"
                   key={cat}
                   onClick={() => setActiveCategory(cat)}
                   className={`text-[10px] px-2 py-0.5 rounded capitalize transition-colors ${
@@ -83,6 +88,7 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({
               const isSelected = theme.id === currentThemeId;
               return (
                 <button
+                  type="button"
                   key={theme.id}
                   onClick={() => {
                     onSelectTheme(theme.id);

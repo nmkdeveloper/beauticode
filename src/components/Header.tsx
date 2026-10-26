@@ -4,12 +4,14 @@ import { Code2, RotateCcw, Keyboard } from 'lucide-react';
 interface HeaderProps {
   onReset: () => void;
   onOpenShortcuts?: () => void;
+  renderSizeSelector?: () => React.ReactNode;
   renderExportButton?: () => React.ReactNode;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   onReset,
   onOpenShortcuts,
+  renderSizeSelector,
   renderExportButton,
 }) => {
   return (
@@ -51,6 +53,7 @@ export const Header: React.FC<HeaderProps> = ({
           <span className="hidden sm:inline">Reset</span>
         </button>
 
+        {renderSizeSelector && renderSizeSelector()}
         {renderExportButton && renderExportButton()}
       </div>
     </header>

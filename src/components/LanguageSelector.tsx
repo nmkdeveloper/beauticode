@@ -46,6 +46,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
   return (
     <div className="relative" ref={dropdownRef}>
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-zinc-800/80 hover:bg-zinc-700/80 border border-zinc-700/60 text-xs font-medium text-zinc-200 transition-all focus:outline-none focus:ring-1 focus:ring-zinc-500"
         title="Select Language"
@@ -58,7 +59,10 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
       </button>
 
       {isOpen && (
-        <div className="absolute bottom-full mb-2 left-0 w-56 rounded-xl bg-zinc-900 border border-zinc-800 shadow-2xl z-50 p-1.5 flex flex-col max-h-72">
+        <div
+          onMouseDown={(e) => e.stopPropagation()}
+          className="absolute bottom-full mb-3 right-0 sm:right-auto sm:left-1/2 sm:-translate-x-1/2 w-64 rounded-xl bg-zinc-900/95 border border-zinc-700/80 shadow-2xl z-50 p-1.5 flex flex-col max-h-72 backdrop-blur-xl animate-fade-in"
+        >
           {/* Search bar */}
           <div className="flex items-center space-x-2 px-2.5 py-1.5 mb-1 bg-zinc-950/60 rounded-lg border border-zinc-800/80 text-xs text-zinc-300">
             <Search className="w-3.5 h-3.5 text-zinc-500" />
@@ -72,10 +76,11 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
             />
           </div>
 
-          <div className="overflow-y-auto flex-1 space-y-0.5">
+          <div className="overflow-y-auto flex-1 space-y-0.5 pr-0.5">
             {/* Auto Detect Option */}
             {!search && (
               <button
+                type="button"
                 onClick={() => {
                   onSelectLanguage(AUTO_DETECT_ID);
                   setIsOpen(false);
@@ -96,6 +101,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
               const isSelected = !isAuto && currentLanguageId === lang.id;
               return (
                 <button
+                  type="button"
                   key={lang.id}
                   onClick={() => {
                     onSelectLanguage(lang.id);

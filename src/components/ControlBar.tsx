@@ -38,7 +38,7 @@ export const ControlBar: React.FC<ControlBarProps> = ({
 
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 max-w-[95vw] sm:max-w-max">
-      <div className="flex items-center space-x-2 sm:space-x-3 px-3 py-2 rounded-2xl bg-zinc-900/90 border border-zinc-800/90 shadow-2xl backdrop-blur-xl text-zinc-300 overflow-x-auto">
+      <div className="flex items-center space-x-2 sm:space-x-3 px-3 py-2 rounded-2xl bg-zinc-900/95 border border-zinc-800/90 shadow-2xl backdrop-blur-xl text-zinc-300 overflow-visible">
         {/* Theme Selector */}
         <ThemeSelector currentThemeId={themeId} onSelectTheme={onThemeChange} />
 

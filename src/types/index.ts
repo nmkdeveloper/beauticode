@@ -44,6 +44,7 @@ export interface EditorSettings {
   showLineNumbers: boolean;
   title: string;
   fontSize: number;
+  preset?: string;
 }
 
 export interface ExportOptions {

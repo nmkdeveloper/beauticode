@@ -38,6 +38,7 @@ export function encodeState(state: Partial<EditorSettings>): string {
       d: state.darkMode,
       ln: state.showLineNumbers,
       tt: state.title,
+      pr: state.preset,
     });
     // Safe Unicode to base64
     return btoa(
@@ -71,6 +72,7 @@ export function decodeState(hash: string): Partial<EditorSettings> | null {
       darkMode: data.d,
       showLineNumbers: data.ln,
       title: data.tt,
+      preset: data.pr,
     };
   } catch {
     return null;
@@ -90,6 +92,7 @@ export function useEditorState() {
   const [darkMode, setDarkMode] = useState<boolean>(() => initialSaved?.darkMode ?? true);
   const [showLineNumbers, setShowLineNumbers] = useState<boolean>(() => initialSaved?.showLineNumbers ?? true);
   const [title, setTitle] = useState<string>(() => initialSaved?.title ?? 'BeautiCode.ts');
+  const [preset, setPreset] = useState<string>(() => initialSaved?.preset ?? 'auto-fit');
   const [fontSize, setFontSize] = useState<number>(14);
 
   // Compute effective language if auto-detect is enabled
@@ -112,6 +115,7 @@ export function useEditorState() {
         darkMode,
         showLineNumbers,
         title,
+        preset,
       });
       if (encoded) {
         window.history.replaceState(null, '', `#${encoded}`);
@@ -119,7 +123,7 @@ export function useEditorState() {
     }, 400);
 
     return () => clearTimeout(timeout);
-  }, [code, language, theme, padding, showBackground, darkMode, showLineNumbers, title]);
+  }, [code, language, theme, padding, showBackground, darkMode, showLineNumbers, title, preset]);
 
   // Listen for browser navigation (Back / Forward)
   useEffect(() => {
@@ -134,6 +138,7 @@ export function useEditorState() {
         if (saved.darkMode !== undefined) setDarkMode(saved.darkMode);
         if (saved.showLineNumbers !== undefined) setShowLineNumbers(saved.showLineNumbers);
         if (saved.title !== undefined) setTitle(saved.title);
+        if (saved.preset !== undefined) setPreset(saved.preset);
       }
     };
 
@@ -150,6 +155,7 @@ export function useEditorState() {
     setDarkMode(true);
     setShowLineNumbers(true);
     setTitle('BeautiCode.ts');
+    setPreset('auto-fit');
   }, []);
 
   return {
@@ -170,6 +176,8 @@ export function useEditorState() {
     setShowLineNumbers,
     title,
     setTitle,
+    preset,
+    setPreset,
     fontSize,
     setFontSize,
     resetSnippet,

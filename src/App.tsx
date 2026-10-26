@@ -1,19 +1,24 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useEditorState } from './hooks/useEditorState';
 import { getThemeById } from './constants/themes';
+import { getPresetById } from './constants/presets';
 import { Header } from './components/Header';
 import { StudioCanvas } from './components/StudioCanvas';
 import { ControlBar } from './components/ControlBar';
+import { SizeSelector } from './components/SizeSelector';
 import { ExportDropdown } from './components/ExportDropdown';
 import { BatchExportModal } from './components/BatchExportModal';
 import { ShortcutsModal } from './components/ShortcutsModal';
-import { exportSingleImage, copyImageToClipboard } from './services/imageExporter';
+import { copyImageToClipboard } from './services/imageExporter';
+import { renderPresetImage } from './services/batchExporter';
+import { saveAs } from 'file-saver';
 import { Check } from 'lucide-react';
 
 export function App() {
   const editor = useEditorState();
   const canvasRef = useRef<HTMLDivElement>(null);
   const currentTheme = getThemeById(editor.theme);
+  const activePreset = getPresetById(editor.preset);
 
   const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
@@ -27,21 +32,28 @@ export function App() {
   const handleQuickExport = useCallback(async () => {
     if (!canvasRef.current) return;
     try {
+      const cardNode =
+        (canvasRef.current.querySelector('.code-card') as HTMLElement) ||
+        canvasRef.current;
+      const blob = await renderPresetImage(
+        cardNode,
+        canvasRef.current,
+        activePreset,
+        currentTheme,
+        editor.showBackground
+      );
       const cleanTitle = (editor.title || 'beauticode')
         .replace(/[<>:"/\\|?*]/g, '_')
         .replace(/\.[^/.]+$/, '')
         .trim() || 'beauticode';
-      await exportSingleImage(canvasRef.current, {
-        format: 'png',
-        pixelRatio: 2,
-        filename: `${cleanTitle}.png`,
-      });
-      showToast('Quick PNG exported (2x)!');
+      const ext = activePreset.width ? `${activePreset.width}x${activePreset.height}` : '2x';
+      saveAs(blob, `${cleanTitle}-${activePreset.id || ext}.png`);
+      showToast(`Exported ${activePreset.name}!`);
     } catch (err) {
       console.error(err);
       showToast('Export failed');
     }
-  }, [editor.title, showToast]);
+  }, [editor.title, activePreset, currentTheme, editor.showBackground, showToast]);
 
   const handleCopyImage = useCallback(async () => {
     if (!canvasRef.current) return;
@@ -115,10 +127,20 @@ export function App() {
       <Header
         onReset={editor.resetSnippet}
         onOpenShortcuts={() => setIsShortcutsOpen(true)}
+        renderSizeSelector={() => (
+          <SizeSelector
+            currentPresetId={editor.preset}
+            onSelectPreset={editor.setPreset}
+            onOpenBatchModal={() => setIsBatchModalOpen(true)}
+          />
+        )}
         renderExportButton={() => (
           <ExportDropdown
             canvasRef={canvasRef}
             title={editor.title}
+            preset={activePreset}
+            theme={currentTheme}
+            showBackground={editor.showBackground}
             onOpenBatchModal={() => setIsBatchModalOpen(true)}
           />
         )}
@@ -139,6 +161,7 @@ export function App() {
           title={editor.title}
           onTitleChange={editor.setTitle}
           fontSize={editor.fontSize}
+          preset={activePreset}
         />
 
         {/* Floating Bottom Control Bar */}
