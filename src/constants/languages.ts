@@ -270,14 +270,23 @@ export function getLanguageById(id: string): Language {
 export function detectLanguage(code: string): string {
   if (!code || !code.trim()) return 'typescript';
 
+  let bestLang = 'typescript';
+  let maxScore = 0;
+
   for (const lang of LANGUAGES) {
-    if (!lang.detectPatterns) continue;
+    if (!lang.detectPatterns || lang.detectPatterns.length === 0) continue;
+    let score = 0;
     for (const pattern of lang.detectPatterns) {
       if (pattern.test(code)) {
-        return lang.id;
+        score++;
       }
+    }
+    if (score > maxScore) {
+      maxScore = score;
+      bestLang = lang.id;
     }
   }
 
-  return 'typescript';
+  return maxScore > 0 ? bestLang : 'typescript';
 }
+

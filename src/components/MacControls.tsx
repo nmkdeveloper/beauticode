@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Edit2, Check } from 'lucide-react';
 
 interface MacControlsProps {
@@ -6,6 +6,7 @@ interface MacControlsProps {
   onTitleChange?: (newTitle: string) => void;
   textColor?: string;
   isEditable?: boolean;
+  darkMode?: boolean;
 }
 
 export const MacControls: React.FC<MacControlsProps> = ({
@@ -13,9 +14,15 @@ export const MacControls: React.FC<MacControlsProps> = ({
   onTitleChange,
   textColor = '#a1a1aa',
   isEditable = true,
+  darkMode = true,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [currentTitle, setCurrentTitle] = useState(title);
+
+  // Sync internal state if title prop updates from parent
+  useEffect(() => {
+    setCurrentTitle(title);
+  }, [title]);
 
   const handleBlur = () => {
     setIsEditing(false);
@@ -36,7 +43,11 @@ export const MacControls: React.FC<MacControlsProps> = ({
   };
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 select-none border-b border-white/[0.08] relative">
+    <div
+      className={`flex items-center justify-between px-4 py-3 select-none border-b relative ${
+        darkMode ? 'border-white/[0.08]' : 'border-black/[0.08]'
+      }`}
+    >
       {/* macOS Traffic Light Buttons */}
       <div className="flex items-center space-x-2">
         <div className="w-3 h-3 rounded-full bg-[#ff5f56] border border-[#e0443e]/40 shadow-sm" />
@@ -55,14 +66,20 @@ export const MacControls: React.FC<MacControlsProps> = ({
               onBlur={handleBlur}
               onKeyDown={handleKeyDown}
               autoFocus
-              className="bg-black/40 text-xs px-2 py-0.5 rounded border border-white/20 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
+              className={`text-xs px-2 py-0.5 rounded border focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono ${
+                darkMode
+                  ? 'bg-black/40 border-white/20 text-white'
+                  : 'bg-white/90 border-zinc-300 text-zinc-900 shadow-sm'
+              }`}
             />
             <button
               onClick={handleBlur}
-              className="text-zinc-400 hover:text-white p-0.5 rounded"
+              className={`p-0.5 rounded ${
+                darkMode ? 'text-zinc-400 hover:text-white' : 'text-zinc-500 hover:text-zinc-900'
+              }`}
               title="Save title"
             >
-              <Check className="w-3 h-3 text-emerald-400" />
+              <Check className="w-3 h-3 text-emerald-500" />
             </button>
           </div>
         ) : (

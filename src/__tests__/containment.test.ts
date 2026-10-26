@@ -1,28 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { DEFAULT_PRESETS } from '../constants/presets';
-
-// Helper extracting the core mathematical scaling function used in batchExporter
-function computeContainmentScale(
-  cardWidth: number,
-  cardHeight: number,
-  presetWidth: number,
-  presetHeight: number,
-  safeMarginRatio: number = 0.85
-): { scale: number; scaledWidth: number; scaledHeight: number; fits: boolean } {
-  if (presetWidth === 0 || presetHeight === 0) {
-    return { scale: 1, scaledWidth: cardWidth, scaledHeight: cardHeight, fits: true };
-  }
-
-  const safeWidth = presetWidth * safeMarginRatio;
-  const safeHeight = presetHeight * safeMarginRatio;
-  const scale = Math.min(safeWidth / cardWidth, safeHeight / cardHeight);
-  const scaledWidth = cardWidth * scale;
-  const scaledHeight = cardHeight * scale;
-
-  const fits = scaledWidth <= safeWidth + 0.001 && scaledHeight <= safeHeight + 0.001;
-
-  return { scale, scaledWidth, scaledHeight, fits };
-}
+import { computeContainmentScale } from '../services/batchExporter';
 
 describe('Auto-Containment Algorithm & Edge Cases', () => {
   const landscape4K = DEFAULT_PRESETS.find((p) => p.id === '4k-landscape')!;

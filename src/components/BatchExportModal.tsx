@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Layers, Archive, Plus, Loader2, CheckCircle2 } from 'lucide-react';
+import { X, Layers, Archive, Plus, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { DEFAULT_PRESETS } from '../constants/presets';
 import { ExportPreset, Theme } from '../types';
 import { PresetItem } from './PresetItem';
@@ -34,8 +34,9 @@ export const BatchExportModal: React.FC<BatchExportModalProps> = ({
   const [customHeight, setCustomHeight] = useState('630');
   const [showAddCustom, setShowAddCustom] = useState(false);
 
-  // Export progress
+  // Export progress and errors
   const [isExporting, setIsExporting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [progress, setProgress] = useState<{ current: number; total: number; name: string } | null>(
     null
   );
@@ -68,7 +69,7 @@ export const BatchExportModal: React.FC<BatchExportModalProps> = ({
       name: customName.trim() || `Custom ${w}×${h}`,
       width: w,
       height: h,
-      aspectRatio: `${w}:${h}`,
+      aspectRatio: `${w}×${h}`,
       category: 'custom',
       description: `${w} × ${h} custom dimensions`,
       enabled: true,
@@ -93,6 +94,7 @@ export const BatchExportModal: React.FC<BatchExportModalProps> = ({
     if (!cardNode || singleDownloadingId) return;
 
     try {
+      setErrorMessage(null);
       setSingleDownloadingId(preset.id);
       const blob = await renderPresetImage(
         cardNode,
@@ -101,13 +103,17 @@ export const BatchExportModal: React.FC<BatchExportModalProps> = ({
         theme,
         showBackground
       );
-      const cleanTitle = (title || 'beauticode').replace(/\.[^/.]+$/, '');
+      const cleanTitle = (title || 'beauticode')
+        .replace(/[<>:"/\\|?*]/g, '_')
+        .replace(/\.[^/.]+$/, '')
+        .trim() || 'beauticode';
       const filename = `${cleanTitle}-${preset.id}-${preset.width || 'auto'}x${
         preset.height || 'auto'
       }.png`;
       saveAs(blob, filename);
     } catch (err) {
       console.error(err);
+      setErrorMessage(`Failed to export ${preset.name}`);
     } finally {
       setSingleDownloadingId(null);
     }
@@ -121,6 +127,7 @@ export const BatchExportModal: React.FC<BatchExportModalProps> = ({
     if (selectedPresets.length === 0) return;
 
     try {
+      setErrorMessage(null);
       setIsExporting(true);
       await exportBatchZip(
         cardNode,
@@ -141,6 +148,7 @@ export const BatchExportModal: React.FC<BatchExportModalProps> = ({
       }, 1000);
     } catch (err) {
       console.error(err);
+      setErrorMessage('Batch export failed. Please verify browser memory or select fewer presets.');
       setIsExporting(false);
       setProgress(null);
     }
@@ -179,6 +187,14 @@ export const BatchExportModal: React.FC<BatchExportModalProps> = ({
 
         {/* Content list */}
         <div className="p-6 overflow-y-auto space-y-4 flex-1">
+          {/* Error Message */}
+          {errorMessage && (
+            <div className="flex items-center space-x-2 p-3 rounded-xl bg-rose-950/40 border border-rose-800/60 text-rose-300 text-xs">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
           {/* Action Row */}
           <div className="flex items-center justify-between text-xs">
             <button

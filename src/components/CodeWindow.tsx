@@ -69,13 +69,20 @@ export const CodeWindow: React.FC<CodeWindowProps> = ({
     }
   };
 
+  const cardBg = darkMode ? theme.cardBg : 'rgba(255, 255, 255, 0.92)';
+  const cardBorder = darkMode ? theme.cardBorder : 'rgba(0, 0, 0, 0.12)';
+  const cardShadow = darkMode
+    ? theme.cardShadow
+    : '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+  const textColor = darkMode ? theme.textColor : '#1e293b';
+
   return (
     <div
       className="code-card rounded-xl overflow-hidden transition-all duration-300 relative select-text"
       style={{
-        backgroundColor: theme.cardBg,
-        border: `1px solid ${theme.cardBorder}`,
-        boxShadow: theme.cardShadow,
+        backgroundColor: cardBg,
+        border: `1px solid ${cardBorder}`,
+        boxShadow: cardShadow,
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
       }}
@@ -84,8 +91,9 @@ export const CodeWindow: React.FC<CodeWindowProps> = ({
       <MacControls
         title={title}
         onTitleChange={onTitleChange}
-        textColor={theme.textColor}
+        textColor={textColor}
         isEditable={!isReadOnly}
+        darkMode={darkMode}
       />
 
       {/* Code Container with Gutter & Overlay */}
@@ -99,8 +107,11 @@ export const CodeWindow: React.FC<CodeWindowProps> = ({
         {/* Line Numbers Gutter */}
         {showLineNumbers && (
           <div
-            className="flex flex-col pr-4 select-none text-right font-mono opacity-30 text-xs sm:text-sm border-r border-white/10 mr-4"
+            className={`flex flex-col pr-4 select-none text-right font-mono border-r mr-4 opacity-40 ${
+              darkMode ? 'border-white/10 text-white' : 'border-black/15 text-zinc-700'
+            }`}
             style={{
+              fontSize: 'inherit',
               lineHeight: '1.65',
               minWidth: '2.5rem',
             }}
@@ -135,7 +146,9 @@ export const CodeWindow: React.FC<CodeWindowProps> = ({
               autoCapitalize="off"
               autoComplete="off"
               autoCorrect="off"
-              className="absolute inset-0 w-full h-full resize-none bg-transparent text-transparent caret-white focus:outline-none whitespace-pre overflow-hidden"
+              className={`absolute inset-0 w-full h-full resize-none bg-transparent text-transparent focus:outline-none whitespace-pre overflow-hidden ${
+                darkMode ? 'caret-white' : 'caret-zinc-900'
+              }`}
               style={{
                 fontFamily: 'inherit',
                 fontSize: 'inherit',

@@ -31,7 +31,10 @@ export const ExportDropdown: React.FC<ExportDropdownProps> = ({
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const cleanTitle = (title || 'beauticode').replace(/\.[^/.]+$/, '');
+  const cleanTitle = (title || 'beauticode')
+    .replace(/[<>:"/\\|?*]/g, '_')
+    .replace(/\.[^/.]+$/, '')
+    .trim() || 'beauticode';
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {

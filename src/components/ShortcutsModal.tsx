@@ -17,6 +17,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
     { key: `${modKey} + Shift + S`, desc: 'Open Batch Export Multi-Size ZIP modal' },
     { key: `${modKey} + C`, desc: 'Copy formatted code image to clipboard (when outside editor)' },
     { key: 'Tab', desc: 'Insert 2-space indentation in code editor' },
+    { key: '?', desc: 'Toggle keyboard shortcuts dialog' },
     { key: 'Esc', desc: 'Close modals & menus' },
   ];
 

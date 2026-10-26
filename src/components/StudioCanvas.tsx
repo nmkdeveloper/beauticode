@@ -43,7 +43,7 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
           padding: `${padding}px`,
         }}
       >
-        <div className="w-full min-w-[320px] max-w-4xl">
+        <div className="w-full min-w-[320px] max-w-5xl transition-all">
           <CodeWindow
             code={code}
             onCodeChange={onCodeChange}

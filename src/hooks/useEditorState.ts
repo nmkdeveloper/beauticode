@@ -27,7 +27,7 @@ export async function captureSnippet(code: string, opts: BeautifierOptions) {
   };
 }`;
 
-function encodeState(state: Partial<EditorSettings>): string {
+export function encodeState(state: Partial<EditorSettings>): string {
   try {
     const json = JSON.stringify({
       c: state.code,
@@ -50,13 +50,15 @@ function encodeState(state: Partial<EditorSettings>): string {
   }
 }
 
-function decodeState(hash: string): Partial<EditorSettings> | null {
+export function decodeState(hash: string): Partial<EditorSettings> | null {
   try {
     const raw = hash.replace(/^#/, '');
     if (!raw) return null;
+    // Handle URL-encoded base64 and base64url replacements
+    const clean = decodeURIComponent(raw).replace(/-/g, '+').replace(/_/g, '/');
     const jsonStr = decodeURIComponent(
       Array.prototype.map
-        .call(atob(raw), (c: string) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .call(atob(clean), (c: string) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
         .join('')
     );
     const data = JSON.parse(jsonStr);
@@ -76,46 +78,18 @@ function decodeState(hash: string): Partial<EditorSettings> | null {
 }
 
 export function useEditorState() {
-  const [code, setCode] = useState<string>(() => {
-    const saved = decodeState(window.location.hash);
-    return saved?.code ?? DEFAULT_SNIPPET;
-  });
+  const initialSaved = useMemo(() => {
+    return typeof window !== 'undefined' ? decodeState(window.location.hash) : null;
+  }, []);
 
-  const [language, setLanguage] = useState<string>(() => {
-    const saved = decodeState(window.location.hash);
-    return saved?.language ?? AUTO_DETECT_ID;
-  });
-
-  const [theme, setTheme] = useState<string>(() => {
-    const saved = decodeState(window.location.hash);
-    return saved?.theme ?? DEFAULT_THEME_ID;
-  });
-
-  const [padding, setPadding] = useState<number>(() => {
-    const saved = decodeState(window.location.hash);
-    return saved?.padding ?? 64;
-  });
-
-  const [showBackground, setShowBackground] = useState<boolean>(() => {
-    const saved = decodeState(window.location.hash);
-    return saved?.showBackground ?? true;
-  });
-
-  const [darkMode, setDarkMode] = useState<boolean>(() => {
-    const saved = decodeState(window.location.hash);
-    return saved?.darkMode ?? true;
-  });
-
-  const [showLineNumbers, setShowLineNumbers] = useState<boolean>(() => {
-    const saved = decodeState(window.location.hash);
-    return saved?.showLineNumbers ?? true;
-  });
-
-  const [title, setTitle] = useState<string>(() => {
-    const saved = decodeState(window.location.hash);
-    return saved?.title ?? 'BeautiCode.ts';
-  });
-
+  const [code, setCode] = useState<string>(() => initialSaved?.code ?? DEFAULT_SNIPPET);
+  const [language, setLanguage] = useState<string>(() => initialSaved?.language ?? AUTO_DETECT_ID);
+  const [theme, setTheme] = useState<string>(() => initialSaved?.theme ?? DEFAULT_THEME_ID);
+  const [padding, setPadding] = useState<number>(() => initialSaved?.padding ?? 64);
+  const [showBackground, setShowBackground] = useState<boolean>(() => initialSaved?.showBackground ?? true);
+  const [darkMode, setDarkMode] = useState<boolean>(() => initialSaved?.darkMode ?? true);
+  const [showLineNumbers, setShowLineNumbers] = useState<boolean>(() => initialSaved?.showLineNumbers ?? true);
+  const [title, setTitle] = useState<string>(() => initialSaved?.title ?? 'BeautiCode.ts');
   const [fontSize, setFontSize] = useState<number>(14);
 
   // Compute effective language if auto-detect is enabled
@@ -142,10 +116,30 @@ export function useEditorState() {
       if (encoded) {
         window.history.replaceState(null, '', `#${encoded}`);
       }
-    }, 500);
+    }, 400);
 
     return () => clearTimeout(timeout);
   }, [code, language, theme, padding, showBackground, darkMode, showLineNumbers, title]);
+
+  // Listen for browser navigation (Back / Forward)
+  useEffect(() => {
+    const handleHashChange = () => {
+      const saved = decodeState(window.location.hash);
+      if (saved) {
+        if (saved.code !== undefined) setCode(saved.code);
+        if (saved.language !== undefined) setLanguage(saved.language);
+        if (saved.theme !== undefined) setTheme(saved.theme);
+        if (saved.padding !== undefined) setPadding(saved.padding);
+        if (saved.showBackground !== undefined) setShowBackground(saved.showBackground);
+        if (saved.darkMode !== undefined) setDarkMode(saved.darkMode);
+        if (saved.showLineNumbers !== undefined) setShowLineNumbers(saved.showLineNumbers);
+        if (saved.title !== undefined) setTitle(saved.title);
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
 
   const resetSnippet = useCallback(() => {
     setCode(DEFAULT_SNIPPET);

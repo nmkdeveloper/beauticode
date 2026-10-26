@@ -7,6 +7,28 @@ export interface BatchProgressCallback {
   (current: number, total: number, presetName: string): void;
 }
 
+export function computeContainmentScale(
+  cardWidth: number,
+  cardHeight: number,
+  presetWidth: number,
+  presetHeight: number,
+  safeMarginRatio: number = 0.85
+): { scale: number; scaledWidth: number; scaledHeight: number; fits: boolean } {
+  if (presetWidth === 0 || presetHeight === 0) {
+    return { scale: 1, scaledWidth: cardWidth, scaledHeight: cardHeight, fits: true };
+  }
+
+  const safeWidth = presetWidth * safeMarginRatio;
+  const safeHeight = presetHeight * safeMarginRatio;
+  const scale = Math.min(safeWidth / cardWidth, safeHeight / cardHeight);
+  const scaledWidth = cardWidth * scale;
+  const scaledHeight = cardHeight * scale;
+
+  const fits = scaledWidth <= safeWidth + 0.001 && scaledHeight <= safeHeight + 0.001;
+
+  return { scale, scaledWidth, scaledHeight, fits };
+}
+
 export async function renderPresetImage(
   codeCardNode: HTMLElement,
   sourceCanvasNode: HTMLElement | null,
@@ -14,18 +36,83 @@ export async function renderPresetImage(
   theme: Theme,
   showBackground: boolean
 ): Promise<Blob> {
-  // If auto-fit / native preset, render source canvas directly
-  if (preset.width === 0 || preset.height === 0) {
-    const targetNode = sourceCanvasNode || codeCardNode;
-    const blob = await toBlob(targetNode, {
-      pixelRatio: 2,
-      quality: 1,
-    });
-    if (!blob) throw new Error(`Failed to render auto-fit preset`);
-    return blob;
+  // Capture unconstrained content dimensions so wide code is never clipped
+  const codeFontEl = codeCardNode.querySelector('.code-font') as HTMLElement | null;
+  const gutterEl = codeCardNode.querySelector('.border-r') as HTMLElement | null;
+  const preEl = codeCardNode.querySelector('pre.shiki') as HTMLElement | null;
+
+  let naturalContentWidth = 0;
+  if (preEl) {
+    naturalContentWidth = preEl.scrollWidth;
+  } else if (codeFontEl) {
+    naturalContentWidth = codeFontEl.scrollWidth;
   }
 
-  // Sized preset: build offscreen 1:1 container with auto-containment
+  const gutterWidth = gutterEl ? gutterEl.offsetWidth + 16 : 0;
+  const paddingX = 40;
+  const cardRect = codeCardNode.getBoundingClientRect();
+  const naturalWidth = Math.max(
+    naturalContentWidth + gutterWidth + paddingX,
+    codeCardNode.scrollWidth,
+    cardRect.width,
+    320
+  );
+  const naturalHeight = Math.max(
+    codeCardNode.scrollHeight,
+    cardRect.height,
+    160
+  );
+
+  // If auto-fit / native preset, render offscreen fitted container
+  if (preset.width === 0 || preset.height === 0) {
+    const container = document.createElement('div');
+    container.style.position = 'fixed';
+    container.style.left = '-99999px';
+    container.style.top = '0';
+    container.style.background = showBackground ? theme.background : 'transparent';
+    container.style.padding = sourceCanvasNode?.style.padding || '64px';
+    container.style.display = 'inline-flex';
+    container.style.alignItems = 'center';
+    container.style.justifyContent = 'center';
+    container.style.borderRadius = '16px';
+    container.style.zIndex = '-9999';
+
+    const clone = codeCardNode.cloneNode(true) as HTMLElement;
+    clone.querySelectorAll('textarea').forEach((ta) => ta.remove());
+    clone.style.width = `${naturalWidth}px`;
+    clone.style.minWidth = `${naturalWidth}px`;
+    clone.style.maxWidth = 'none';
+
+    const cloneCodeFont = clone.querySelector('.code-font') as HTMLElement | null;
+    if (cloneCodeFont) {
+      cloneCodeFont.style.overflow = 'visible';
+      cloneCodeFont.style.overflowX = 'visible';
+    }
+
+    container.appendChild(clone);
+    document.body.appendChild(container);
+
+    try {
+      if (document.fonts && document.fonts.ready) {
+        await document.fonts.ready;
+      }
+      await new Promise((r) => setTimeout(r, 60));
+
+      const blob = await toBlob(container, {
+        pixelRatio: 2,
+        quality: 1,
+        filter: (domNode) => (domNode as HTMLElement).tagName !== 'TEXTAREA',
+      });
+      if (!blob) throw new Error(`Failed to render auto-fit preset`);
+      return blob;
+    } finally {
+      if (document.body.contains(container)) {
+        document.body.removeChild(container);
+      }
+    }
+  }
+
+  // Sized preset: build offscreen container with exact preset dimensions
   const container = document.createElement('div');
   container.style.position = 'fixed';
   container.style.left = '-99999px';
@@ -39,26 +126,30 @@ export async function renderPresetImage(
   container.style.overflow = 'hidden';
   container.style.zIndex = '-9999';
 
-  // Clone code card
+  // Clone code card without interactive textarea
   const clone = codeCardNode.cloneNode(true) as HTMLElement;
-  // Clean up any textareas to prevent cursors or caret markers
   clone.querySelectorAll('textarea').forEach((ta) => ta.remove());
 
-  // Capture original dimensions
-  const cardRect = codeCardNode.getBoundingClientRect();
-  const cardWidth = Math.max(cardRect.width, 320);
-  const cardHeight = Math.max(cardRect.height, 160);
-
-  // Set explicit width on card clone matching source
-  clone.style.width = `${cardWidth}px`;
-  clone.style.minWidth = `${cardWidth}px`;
-  clone.style.maxWidth = `${cardWidth}px`;
+  // Set explicit unclipped width on card clone
+  clone.style.width = `${naturalWidth}px`;
+  clone.style.minWidth = `${naturalWidth}px`;
+  clone.style.maxWidth = 'none';
   clone.style.boxSizing = 'border-box';
 
-  // Auto-containment calculation with 15% safe margin
-  const safeWidth = preset.width * 0.85;
-  const safeHeight = preset.height * 0.85;
-  const scale = Math.min(safeWidth / cardWidth, safeHeight / cardHeight);
+  const cloneCodeFont = clone.querySelector('.code-font') as HTMLElement | null;
+  if (cloneCodeFont) {
+    cloneCodeFont.style.overflow = 'visible';
+    cloneCodeFont.style.overflowX = 'visible';
+  }
+
+  // Calculate containment scale with safe margin
+  const { scale } = computeContainmentScale(
+    naturalWidth,
+    naturalHeight,
+    preset.width,
+    preset.height,
+    0.85
+  );
 
   // Scale wrapper
   const scaler = document.createElement('div');
@@ -73,7 +164,9 @@ export async function renderPresetImage(
   document.body.appendChild(container);
 
   try {
-    // Settle fonts and CSS
+    if (document.fonts && document.fonts.ready) {
+      await document.fonts.ready;
+    }
     await new Promise((r) => setTimeout(r, 60));
 
     const blob = await toBlob(container, {
@@ -81,6 +174,7 @@ export async function renderPresetImage(
       quality: 1,
       width: preset.width,
       height: preset.height,
+      filter: (domNode) => (domNode as HTMLElement).tagName !== 'TEXTAREA',
     });
 
     if (!blob) {
@@ -89,7 +183,6 @@ export async function renderPresetImage(
 
     return blob;
   } finally {
-    // Sequential memory cleanup
     if (document.body.contains(container)) {
       document.body.removeChild(container);
     }
@@ -106,7 +199,11 @@ export async function exportBatchZip(
   onProgress?: BatchProgressCallback
 ): Promise<void> {
   const zip = new JSZip();
-  const cleanBase = (baseFilename || 'beauticode').replace(/\.[^/.]+$/, '');
+  const cleanBase =
+    (baseFilename || 'beauticode')
+      .replace(/[<>:"/\\|?*]/g, '_')
+      .replace(/\.[^/.]+$/, '')
+      .trim() || 'beauticode';
   const total = presets.length;
 
   for (let i = 0; i < presets.length; i++) {

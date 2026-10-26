@@ -12,22 +12,31 @@ export async function exportSingleImage(
   options: SingleExportOptions
 ): Promise<void> {
   const { format, pixelRatio = 2, filename = 'beauticode.png' } = options;
+  const sanitizedFilename = filename.replace(/[<>:"/\\|?*]/g, '_').trim() || 'beauticode.png';
+
+  if (document.fonts && document.fonts.ready) {
+    await document.fonts.ready;
+  }
+
+  const filter = (domNode: HTMLElement) => domNode.tagName !== 'TEXTAREA';
 
   if (format === 'svg') {
     const dataUrl = await toSvg(node, {
       quality: 1,
       pixelRatio,
+      filter,
     });
-    saveAs(dataUrl, filename.endsWith('.svg') ? filename : `${filename}.svg`);
+    saveAs(dataUrl, sanitizedFilename.endsWith('.svg') ? sanitizedFilename : `${sanitizedFilename}.svg`);
   } else {
     const blob = await toBlob(node, {
       pixelRatio,
       quality: 1,
+      filter,
     });
     if (!blob) {
       throw new Error('Failed to render PNG blob from canvas');
     }
-    saveAs(blob, filename.endsWith('.png') ? filename : `${filename}.png`);
+    saveAs(blob, sanitizedFilename.endsWith('.png') ? sanitizedFilename : `${sanitizedFilename}.png`);
   }
 }
 
@@ -36,9 +45,16 @@ export async function copyImageToClipboard(
   pixelRatio: number = 2
 ): Promise<boolean> {
   try {
+    if (document.fonts && document.fonts.ready) {
+      await document.fonts.ready;
+    }
+
+    const filter = (domNode: HTMLElement) => domNode.tagName !== 'TEXTAREA';
+
     const blob = await toBlob(node, {
       pixelRatio,
       quality: 1,
+      filter,
     });
 
     if (!blob) {

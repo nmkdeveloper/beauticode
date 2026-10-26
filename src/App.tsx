@@ -27,7 +27,10 @@ export function App() {
   const handleQuickExport = useCallback(async () => {
     if (!canvasRef.current) return;
     try {
-      const cleanTitle = (editor.title || 'beauticode').replace(/\.[^/.]+$/, '');
+      const cleanTitle = (editor.title || 'beauticode')
+        .replace(/[<>:"/\\|?*]/g, '_')
+        .replace(/\.[^/.]+$/, '')
+        .trim() || 'beauticode';
       await exportSingleImage(canvasRef.current, {
         format: 'png',
         pixelRatio: 2,
@@ -67,6 +70,15 @@ export function App() {
         return;
       }
 
+      const activeEl = document.activeElement;
+      const isInputFocused =
+        activeEl?.tagName === 'INPUT' || activeEl?.tagName === 'TEXTAREA';
+
+      if (e.key === '?' && !isInputFocused) {
+        setIsShortcutsOpen((prev) => !prev);
+        return;
+      }
+
       if (isModifier && e.key.toLowerCase() === 's') {
         e.preventDefault();
         if (e.shiftKey) {
@@ -77,9 +89,6 @@ export function App() {
       } else if (isModifier && e.key.toLowerCase() === 'c') {
         // If outside editor and not selecting text, trigger copy image
         const selection = window.getSelection()?.toString();
-        const activeEl = document.activeElement;
-        const isInputFocused =
-          activeEl?.tagName === 'INPUT' || activeEl?.tagName === 'TEXTAREA';
 
         if (!selection && !isInputFocused) {
           e.preventDefault();

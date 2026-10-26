@@ -21,6 +21,11 @@ describe('Language Presets and Auto-detection', () => {
     expect(detectLanguage(code)).toBe('rust');
   });
 
+  it('detects Rust code with let statement without mistaking for JavaScript', () => {
+    const code = `fn main() {\n    let answer = 42;\n    println!("Answer: {}", answer);\n}`;
+    expect(detectLanguage(code)).toBe('rust');
+  });
+
   it('detects Go code with package and func', () => {
     const code = `package main\n\nimport "fmt"\n\nfunc main() {\n    fmt.Println("Hello Go")\n}`;
     expect(detectLanguage(code)).toBe('go');
