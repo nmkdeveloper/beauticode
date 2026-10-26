@@ -6,7 +6,8 @@
 [![CI Test & Build](https://github.com/nmkdeveloper/beauticode/actions/workflows/ci.yml/badge.svg)](https://github.com/nmkdeveloper/beauticode/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-🌐 **Live Demo on GitHub Pages**: [https://nmkdeveloper.github.io/beauticode/](https://nmkdeveloper.github.io/beauticode/)
+🌐 **Live App**: [https://beauticode.nmkdeveloper.io.vn/](https://beauticode.nmkdeveloper.io.vn/)  
+*(Backup GitHub Pages mirror: [https://nmkdeveloper.github.io/beauticode/](https://nmkdeveloper.github.io/beauticode/))*
 
 ---
 
