@@ -49,19 +49,19 @@
 **Interfaces:**
 - Produces: Working React + Vite + Tailwind CSS development environment with required dependencies (`shiki`, `lucide-react`, `html-to-image`, `jszip`, `file-saver`, `clsx`, `tailwind-merge`).
 
-- [ ] **Step 1: Initialize package.json and install dependencies**
+- [x] **Step 1: Initialize package.json and install dependencies**
   Install `react`, `react-dom`, `lucide-react`, `shiki`, `html-to-image`, `jszip`, `file-saver`, `clsx`, `tailwind-merge` as dependencies; `typescript`, `@types/react`, `@types/react-dom`, `@types/file-saver`, `vite`, `@vitejs/plugin-react`, `tailwindcss`, `autoprefixer`, `postcss` as devDependencies.
 
-- [ ] **Step 2: Configure Vite, Tailwind, PostCSS, and TypeScript**
+- [x] **Step 2: Configure Vite, Tailwind, PostCSS, and TypeScript**
   Configure `vite.config.ts`, `tailwind.config.js` with dark mode support and custom fonts/colors, `tsconfig.json` with strict type checking.
 
-- [ ] **Step 3: Setup index.html and root styling**
+- [x] **Step 3: Setup index.html and root styling**
   Add modern typography (`JetBrains Mono` / `Fira Code` / `Inter` from Google Fonts) and standard reset in `src/index.css`.
 
-- [ ] **Step 4: Verify initial build and dev server**
+- [x] **Step 4: Verify initial build and dev server**
   Run `npm run build` to verify clean compilation without errors.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
   ```bash
   git add .
   git commit -m "chore: initialize project with React, Vite, Tailwind, and core dependencies"
@@ -83,22 +83,22 @@
   - `Language` interface and `LANGUAGES` list (C++, C, JavaScript, TypeScript, Python, Rust, Go, Java, HTML, CSS, JSON, SQL, Bash, Markdown, PHP, Swift, Kotlin, Dart).
   - `ExportPreset` interface and `DEFAULT_PRESETS` list (4K Landscape 3840x2160, 4K Portrait 2160x3840, FHD Landscape 1920x1080, FHD Portrait 1080x1920, Square 2160x2160, Auto-fit).
 
-- [ ] **Step 1: Define TypeScript models in `src/types/index.ts`**
+- [x] **Step 1: Define TypeScript models in `src/types/index.ts`**
   Define `Theme`, `Language`, `ExportPreset`, `EditorSettings`, `ExportOptions`.
 
-- [ ] **Step 2: Implement `src/constants/themes.ts`**
+- [x] **Step 2: Implement `src/constants/themes.ts`**
   Implement theme definitions with background styles (radial gradients, linear gradients, solid dark/light tones), card backgrounds, text contrast tokens, and matching Shiki highlighter themes.
 
-- [ ] **Step 3: Implement `src/constants/languages.ts`**
+- [x] **Step 3: Implement `src/constants/languages.ts`**
   Implement language list with display names, Shiki language IDs, and simple auto-detection heuristics (regex patterns for keywords like `#include`, `def `, `const `, `fn `, `public class`).
 
-- [ ] **Step 4: Implement `src/constants/presets.ts`**
+- [x] **Step 4: Implement `src/constants/presets.ts`**
   Define 4K, FHD, Square, and Auto-fit preset dimensions and descriptions.
 
-- [ ] **Step 5: Verify types and constants**
+- [x] **Step 5: Verify types and constants**
   Run `npx tsc --noEmit` to verify type definitions.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
   ```bash
   git add src/types/ src/constants/
   git commit -m "feat: define theme, language, and export preset data structures"
@@ -120,23 +120,23 @@
   - `highlightCode(code: string, lang: string, theme: string): Promise<string>`
   - `<CodeWindow />`: Component rendering the macOS title bar with editable file title, line numbers, editable textarea overlay, and highlighted code container.
 
-- [ ] **Step 1: Implement `src/services/highlighter.ts`**
+- [x] **Step 1: Implement `src/services/highlighter.ts`**
   Initialize Shiki highlighter singleton with support for required languages and dual dark/light themes.
 
-- [ ] **Step 2: Build `src/components/MacControls.tsx`**
+- [x] **Step 2: Build `src/components/MacControls.tsx`**
   Create macOS traffic light buttons (red, yellow, green dots) and title bar with optional interactive file name editing.
 
-- [ ] **Step 3: Build `src/components/CodeWindow.tsx`**
+- [x] **Step 3: Build `src/components/CodeWindow.tsx`**
   Implement the code card:
   - Synchronized transparent textarea for user editing.
   - Formatted syntax highlighted background layer.
   - Left line numbers gutter with toggle.
   - Drop shadow and border styling conforming to the selected theme.
 
-- [ ] **Step 4: Test syntax highlighting and editing**
+- [x] **Step 4: Test syntax highlighting and editing**
   Verify code editing updates highlight in real-time with zero lag.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
   ```bash
   git add src/services/highlighter.ts src/components/CodeWindow.tsx src/components/MacControls.tsx
   git commit -m "feat: implement Shiki syntax highlighting and macOS code window component"
@@ -159,25 +159,25 @@
 - Consumes: `CodeWindow`, `THEMES`, `LANGUAGES`.
 - Produces: Full interactive studio with real-time preview, control bar at the bottom, theme picker modal/popover, language search dropdown, padding adjuster (16, 32, 64, 128px), background toggle, and dark mode toggle.
 
-- [ ] **Step 1: Implement `src/hooks/useEditorState.ts`**
+- [x] **Step 1: Implement `src/hooks/useEditorState.ts`**
   State management for code text, language, theme, padding, line numbers, background visibility, title, and URL hash encoding/decoding.
 
-- [ ] **Step 2: Build `src/components/LanguageSelector.tsx`**
+- [x] **Step 2: Build `src/components/LanguageSelector.tsx`**
   Searchable dropdown with auto-detect option and common programming languages.
 
-- [ ] **Step 3: Build `src/components/ThemeSelector.tsx`**
+- [x] **Step 3: Build `src/components/ThemeSelector.tsx`**
   Dropdown/popover with theme categories (Gradients, Minimal, Dark, Partner/Tech themes) and color swatches.
 
-- [ ] **Step 4: Build `src/components/ControlBar.tsx`**
+- [x] **Step 4: Build `src/components/ControlBar.tsx`**
   Floating bottom action bar matching ray.so layout: Theme, Background toggle, Dark mode toggle, Line numbers toggle, Padding segmented control, Language selector.
 
-- [ ] **Step 5: Build `src/components/StudioCanvas.tsx` & `src/components/Header.tsx`**
+- [x] **Step 5: Build `src/components/StudioCanvas.tsx` & `src/components/Header.tsx`**
   Canvas container with responsive auto-zoom/fit so that users with any screen size see the full code card comfortably centered.
 
-- [ ] **Step 6: Integrate into `src/App.tsx` and test**
+- [x] **Step 6: Integrate into `src/App.tsx` and test**
   Verify state updates, theme switching, padding changing, and responsive behavior.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
   ```bash
   git add src/components/ src/hooks/ src/App.tsx
   git commit -m "feat: implement studio canvas, floating control bar, and theme/language selectors"
@@ -199,22 +199,22 @@
   - `copyImageToClipboard(node: HTMLElement, scale: number): Promise<boolean>`
   - Quick export dropdown: Save PNG, Save SVG, Copy Image, Copy URL, Open Batch Export Modal.
 
-- [ ] **Step 1: Implement single export logic in `src/services/imageExporter.ts`**
+- [x] **Step 1: Implement single export logic in `src/services/imageExporter.ts`**
   Use `html-to-image` (`toPng`, `toSvg`, `toBlob`) with pixelRatio configuration (2x, 4x, etc.) for ultra-crisp output.
 
-- [ ] **Step 2: Implement clipboard copy with fallback**
+- [x] **Step 2: Implement clipboard copy with fallback**
   Use `navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])` with toast notification for success/error.
 
-- [ ] **Step 3: Implement URL hash sharing**
+- [x] **Step 3: Implement URL hash sharing**
   Encode editor state into URL hash (`#code=...&lang=...&theme=...`) and handle copy link action.
 
-- [ ] **Step 4: Build `src/components/ExportDropdown.tsx`**
+- [x] **Step 4: Build `src/components/ExportDropdown.tsx`**
   Menu matching Ray.so export menu with shortcut labels and "Batch Export (Multi-size ZIP)" prominent action.
 
-- [ ] **Step 5: Test single export and clipboard**
+- [x] **Step 5: Test single export and clipboard**
   Verify PNG download, SVG download, and clipboard copy work smoothly.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
   ```bash
   git add src/services/imageExporter.ts src/components/ExportDropdown.tsx src/components/Header.tsx
   git commit -m "feat: implement single image export, clipboard copy, and URL sharing"
@@ -237,7 +237,7 @@
   - `exportBatchZip(codeCard: HTMLElement, presets: ExportPreset[], theme: Theme, baseName: string, onProgress: (p: number) => void): Promise<void>`
   - `<BatchExportModal />`: Modal with preset toggles (4K Portrait, 4K Landscape, FHD Portrait, FHD Landscape, Square, Custom), custom width/height input, live ratio preview indicator, individual download button per preset, and "Export All (.ZIP)" button with progress bar.
 
-- [ ] **Step 1: Implement Auto-Containment Algorithm in `src/services/batchExporter.ts`**
+- [x] **Step 1: Implement Auto-Containment Algorithm in `src/services/batchExporter.ts`**
   Construct a virtual/offscreen rendering container sized to exact preset dimensions (e.g. 3840x2160 or 2160x3840).
   Calculate:
   ```ts
@@ -247,10 +247,10 @@
   ```
   Center the code card within the preset background, applying the scale transform so code is perfectly framed and never cropped.
 
-- [ ] **Step 2: Implement ZIP Packaging with JSZip & FileSaver**
+- [x] **Step 2: Implement ZIP Packaging with JSZip & FileSaver**
   Iterate through selected presets, render each canvas offscreen, append to `JSZip` instance, track progress percentage, and trigger `saveAs(zipBlob, 'beauticode-export.zip')`.
 
-- [ ] **Step 3: Build `src/components/PresetItem.tsx` & `src/components/BatchExportModal.tsx`**
+- [x] **Step 3: Build `src/components/PresetItem.tsx` & `src/components/BatchExportModal.tsx`**
   Create rich UI modal:
   - Checkboxes for presets with badge labels (4K, 16:9, 9:16, 1:1, etc.).
   - Custom size adder (Width, Height, Label).
@@ -258,10 +258,10 @@
   - Download individual image button on each preset card.
   - "Export All (N images) as .ZIP" primary action.
 
-- [ ] **Step 4: Test batch export**
+- [x] **Step 4: Test batch export**
   Test batch export with 4K portrait, 4K landscape, FHD, and Square presets. Inspect generated ZIP file to ensure all images contain properly centered, sharp code.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
   ```bash
   git add src/services/batchExporter.ts src/components/BatchExportModal.tsx src/components/PresetItem.tsx
   git commit -m "feat: implement multi-preset batch export with intelligent auto-containment and ZIP packaging"
@@ -279,19 +279,19 @@
 **Interfaces:**
 - Ensures compliance with `design-taste-frontend` (`true-black-flat` dark aesthetic, anti-slop typography, keyboard shortcuts, accessible focus states).
 
-- [ ] **Step 1: Apply taste-skill design principles**
+- [x] **Step 1: Apply taste-skill design principles**
   Refine typography, remove unnecessary borders/shadows from inactive elements, ensure color is strictly on data/code, add subtle hover/active micro-interactions.
 
-- [ ] **Step 2: Add keyboard shortcuts**
+- [x] **Step 2: Add keyboard shortcuts**
   Support Cmd/Ctrl+S (Quick Save), Cmd/Ctrl+Shift+S (Batch Export), Cmd/Ctrl+C (Copy Image).
 
-- [ ] **Step 3: Mobile & Tablet preview check**
+- [x] **Step 3: Mobile & Tablet preview check**
   Ensure control bar wraps cleanly or scrolls horizontally on smaller viewports.
 
-- [ ] **Step 4: Run production build & verify**
+- [x] **Step 4: Run production build & verify**
   Run `npm run build` and test the production bundle with `npm run preview`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
   ```bash
   git add .
   git commit -m "polish: apply taste-skill design rules, keyboard shortcuts, and responsive refinements"
